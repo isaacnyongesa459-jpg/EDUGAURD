@@ -1,0 +1,1 @@
+The client is a single-page dashboard served at `/`. Visible dashboard views are selected by role within the document: Schools, Overview, Users, Activity, Students, Devices, Safety policies, Notifications, and Reports. These are not separate URL routes.
