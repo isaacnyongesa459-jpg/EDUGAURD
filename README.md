@@ -14,6 +14,10 @@ Requirements: Node.js 20+ and PostgreSQL 14+.
 
 The app serves the static shell at `/`, browser files only under `/client/`, the favicon under `/public/`, and JSON at `/manus-routes.json`. It does not expose arbitrary filesystem content. `/api/health` checks database availability and is suitable as a deployment health path.
 
+## GitHub Pages preview
+
+The frontend's local assets use relative paths so a GitHub Pages project site such as `/EDUGAURD/` can load its styles and scripts. GitHub Pages serves static files only: the sign-in form, API, database, Socket.IO updates, and extension backend are not provided by Pages. Sign-in and live data require deploying the Node.js/PostgreSQL backend separately and configuring a same-origin API route or an explicit frontend API origin with suitable CORS and secure-cookie settings. No backend URL or production service is configured by this repository.
+
 ## Included foundations
 
 - Role-aware sign-in and dashboard pages for super administrators, school administrators, parents and teachers; UI/API values are populated from service responses, not fabricated sample data.
