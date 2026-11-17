@@ -1,3 +1,5 @@
+import { buildDynamicRules, normalizePolicyDomain } from './policy-rules.mjs';
+
 const API_KEY = 'eduguardConfig';
 const POLICY_KEY = 'eduguardPolicy';
 const DEVICE_KEY = 'eduguardDeviceToken';
@@ -5,6 +7,7 @@ const DB_NAME = 'eduguard-outbox-v1';
 const STORE = 'events';
 const SYNC_ALARM = 'eduguard-sync';
 const POLICY_ALARM = 'eduguard-policy';
+const RETRY_ALARM = 'eduguard-retry';
 const activeTabs = new Map();
 
 function openDb() {
@@ -41,33 +44,21 @@ const local = keys => chrome.storage.local.get(keys);
 const setLocal = values => chrome.storage.local.set(values);
 const uuid = () => crypto.randomUUID();
 function originFor(apiOrigin) { return apiOrigin.replace(/\/+$/, ''); }
-function validDomain(raw) {
-  const value = String(raw || '').trim().toLowerCase().replace(/^\*\./, '').replace(/\.$/, '');
-  if (!value || value.includes('/') || value.includes(':') || value.includes('*')) throw new Error(`Invalid policy domain: ${raw}`);
-  const url = new URL(`https://${value}` );
-  if (url.hostname !== value || value === 'localhost') return url.hostname;
-  return value;
-}
+function validDomain(raw) { return normalizePolicyDomain(raw); }
 function matchesDomainRule(rule, domain) {
   const host = validDomain(rule.domain);
   return domain === host || domain.endsWith(`.${host}`);
 }
-function ruleUrlFilter(_rule, host) {
-  // The current API supplies domain rules only; legacy urlMatch labels carry no path pattern.
-  return `||${host}^`;
+function normalizeApiOrigin(raw) {
+  let url;
+  try { url = new URL(String(raw)); } catch { throw new Error('Enter a valid backend origin.'); }
+  if (url.username || url.password || url.search || url.hash || url.pathname !== '/') throw new Error('Backend origin must not include credentials, a path, query, or fragment.');
+  const loopback = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
+  if (url.protocol !== 'https:' && !(url.protocol === 'http:' && loopback)) throw new Error('Backend must use HTTPS; HTTP is permitted only for localhost development.');
+  return url.origin;
 }
 async function refreshDnr(policy) {
-  if (!policy || policy.defaultAction !== 'deny' || typeof policy.captureFullUrl !== 'boolean' || !Array.isArray(policy.websiteRules) || !Array.isArray(policy.applicationRules)) throw new Error('Unsupported policy format: expected defaultAction deny, captureFullUrl, websiteRules and applicationRules');
-  for (const rule of policy.websiteRules) {
-    if (!rule || !rule.id || !rule.domain || !['allow', 'block'].includes(rule.action) || typeof rule.category !== 'string') throw new Error('Unsupported website rule in policy');
-  }
-  const rules = [{ id: 1, priority: 1, action: { type: 'redirect', redirect: { extensionPath: '/blocked.html' } }, condition: { regexFilter: '^https?://', resourceTypes: ['main_frame'] } }];
-  let id = 10;
-  const validRules = policy.websiteRules.filter(r => ['allow', 'block'].includes(r.action) && r.domain);
-  for (const rule of validRules) {
-    const host = validDomain(rule.domain);
-    rules.push({ id: id++, priority: rule.action === 'block' ? 300 : 200, action: rule.action === 'block' ? { type: 'redirect', redirect: { extensionPath: '/blocked.html' } } : { type: 'allow' }, condition: { regexFilter: ruleUrlFilter(rule, host), resourceTypes: ['main_frame'] } });
-  }
+  const rules = buildDynamicRules(policy);
   const existing = await chrome.declarativeNetRequest.getDynamicRules();
   await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: existing.map(r => r.id), addRules: rules });
   await setLocal({ [POLICY_KEY]: policy });
@@ -75,9 +66,10 @@ async function refreshDnr(policy) {
 async function request(path, method, body) {
   const { [API_KEY]: cfg, [DEVICE_KEY]: token } = await local([API_KEY, DEVICE_KEY]);
   if (!cfg?.apiOrigin) throw new Error('Configure the backend HTTPS origin in EduGuard options first.');
+  const apiOrigin = normalizeApiOrigin(cfg.apiOrigin);
   const headers = { 'content-type': 'application/json' };
   if (token) headers['x-device-token'] = token;
-  const response = await fetch(`${originFor(cfg.apiOrigin)}${path}`, { method, headers, ...(body ? { body: JSON.stringify(body) } : {}) });
+  const response = await fetch(`${originFor(apiOrigin)}${path}`, { method, headers, ...(body ? { body: JSON.stringify(body) } : {}) });
   if (!response.ok) throw new Error(`Backend returned HTTP ${response.status} for ${path}`);
   return response.status === 204 ? null : response.json();
 }
@@ -104,12 +96,17 @@ async function syncEvents() {
   await setLocal({ lastSyncAt: new Date().toISOString(), retryAttempt: 0, lastError: '' });
 }
 async function runSync() {
-  try { await syncPolicy(); await syncEvents(); }
+  try {
+    await syncPolicy();
+    await syncEvents();
+    chrome.alarms.clear(RETRY_ALARM);
+    await setLocal({ retryAttempt: 0, nextRetryAt: null, lastError: '' });
+  }
   catch (error) {
     const { retryAttempt = 0 } = await local('retryAttempt');
     const next = Math.min(retryAttempt + 1, 8); const delay = Math.min(15 * 60 * 1000, 5000 * (2 ** (next - 1)));
     await setLocal({ retryAttempt: next, lastError: String(error.message || error), nextRetryAt: new Date(Date.now() + delay).toISOString() });
-    chrome.alarms.create(SYNC_ALARM, { when: Date.now() + delay });
+    chrome.alarms.create(RETRY_ALARM, { when: Date.now() + delay });
   }
 }
 function normalizeHost(input) { try { const url = new URL(input); return ['http:', 'https:'].includes(url.protocol) ? url.hostname.toLowerCase() : null; } catch { return null; } }
@@ -162,7 +159,7 @@ chrome.tabs.onRemoved.addListener(tabId => {
   const prior = activeTabs.get(tabId);
   if (prior) { void finishVisit(prior); activeTabs.delete(tabId); }
 });
-chrome.alarms.onAlarm.addListener(alarm => { if ([SYNC_ALARM, POLICY_ALARM].includes(alarm.name)) void runSync(); });
+chrome.alarms.onAlarm.addListener(alarm => { if ([SYNC_ALARM, POLICY_ALARM, RETRY_ALARM].includes(alarm.name)) void runSync(); });
 chrome.runtime.onInstalled.addListener(() => {
   chrome.alarms.create(POLICY_ALARM, { periodInMinutes: 5 });
   chrome.alarms.create(SYNC_ALARM, { periodInMinutes: 1 });
@@ -178,7 +175,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       if (!result?.deviceToken) throw new Error('Enrollment response did not include deviceToken.');
       await setLocal({ [DEVICE_KEY]: result.deviceToken }); await runSync(); return { ok: true };
     }
-    if (message.type === 'SAVE_CONFIG') { await setLocal({ [API_KEY]: { apiOrigin: message.apiOrigin } }); return { ok: true }; }
+    if (message.type === 'SAVE_CONFIG') { await setLocal({ [API_KEY]: { apiOrigin: normalizeApiOrigin(message.apiOrigin) } }); return { ok: true }; }
     if (message.type === 'STATUS') {
       const values = await local([API_KEY, DEVICE_KEY, 'lastPolicySyncAt', 'lastSyncAt', 'lastError', 'nextRetryAt']);
       return { configured: !!values[API_KEY]?.apiOrigin, enrolled: !!values[DEVICE_KEY], ...values };

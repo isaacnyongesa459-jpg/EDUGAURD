@@ -13,12 +13,12 @@
 - `server/src/app.js` creates Express middleware, serves only explicit public frontend files, mounts APIs and creates Socket.IO.
 - `server/src/routes/api.js` and `server/src/routes/extension.js` implement cookie-authenticated human and device-token extension routes; `server/src/routes/relationships.js` mounts the school-admin assignment workflow through its controller, transactional service and data-access model.
 - `server/src/middleware/security.js` contains JWT, CSRF, role/school scope, validation and audit helpers.
-- `server/src/db/index.js` manages the PostgreSQL connection pool; `server/src/db/migrate.js` applies ordered SQL migrations.
+- `server/src/db/index.js` manages the PostgreSQL connection pool; `server/src/db/migrate.js` applies ordered SQL migrations under a PostgreSQL advisory lock so simultaneous service starts do not race.
 - `server/migrations/` defines normalized records and constraints. `server/scripts/create-admin.js` provisions the first super administrator and school from private environment values.
-- `server/test/` holds health/auth/contract checks. `server/README.md` lists endpoint details and setup constraints.
+- `server/test/` holds health/auth/contract and extension-policy regression checks. `server/README.md` lists endpoint details and setup constraints.
 
 ## Browser extension
-- `extension/manifest.json` requests the MV3 permissions necessary for domain-level main-frame policy enforcement and navigation metadata. `extension/background.js` installs DNR rules, measures approximate visit duration, and queues consented metadata in IndexedDB for retryable sync.
+- `extension/manifest.json` requests the MV3 permissions necessary for domain-level main-frame policy enforcement and navigation metadata. `extension/background.js` installs DNR rules, measures approximate visit duration, and queues only policy-permitted metadata in IndexedDB for retryable sync. `extension/policy-rules.mjs` validates policy domains and builds bounded DNR URL-filter rules.
 - `extension/options.html`, `options.js` and `options.css` configure the backend and consume a one-time enrollment code; `blocked.html` and `blocked.js` explain school-policy blocks. `extension/README.md` describes loading, permissions, privacy, supported browser boundaries and tests.
 
 ## Root operations
