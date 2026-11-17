@@ -1,0 +1,1 @@
+try { const host = new URL(location.href).searchParams.get('target'); if (host) document.getElementById('target').textContent = `Access to ${host} is blocked by the school’s website policy.`; } catch { /* Keep generic wording for malformed destinations. */ }
