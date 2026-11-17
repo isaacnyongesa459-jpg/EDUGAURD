@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+  "name": "EduGuard Managed Browser",
+  "version": "1.0.0",
+  "description": "Transparent school-policy enforcement and activity reporting for this managed browser only.",
+  "permissions": [
+    "storage",
+    "alarms",
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess",
+    "webNavigation",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "options_page": "options.html",
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "default_deny",
+        "enabled": true,
+        "path": "rules/default.json"
+      }
+    ]
+  },
+  "action": {
+    "default_title": "EduGuard managed browser"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "blocked.html",
+        "blocked.js"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
+}
