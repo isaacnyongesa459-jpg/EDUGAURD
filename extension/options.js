@@ -1,0 +1,11 @@
+const $ = id => document.getElementById(id);
+function call(message) { return new Promise((resolve, reject) => chrome.runtime.sendMessage(message, response => chrome.runtime.lastError ? reject(new Error(chrome.runtime.lastError.message)) : response?.error ? reject(new Error(response.error)) : resolve(response))); }
+function validateOrigin(raw) {
+  const u = new URL(raw); if (u.username || u.password || u.search || u.hash || u.pathname !== '/') throw new Error('Enter only the backend origin (no path, query, or credentials).');
+  if (u.protocol !== 'https:' && !(u.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(u.hostname))) throw new Error('Backend must use HTTPS; HTTP is permitted only for localhost development.'); return u.origin;
+}
+async function refresh() { const s = await call({ type: 'STATUS' }); $('status').textContent = JSON.stringify({ backend: s.eduguardConfig?.apiOrigin || 'not configured', enrolled: s.enrolled, lastPolicySyncAt: s.lastPolicySyncAt || null, lastActivitySyncAt: s.lastSyncAt || null, lastError: s.lastError || null, retryAt: s.nextRetryAt || null }, null, 2); if (s.eduguardConfig?.apiOrigin) $('origin').value = s.eduguardConfig.apiOrigin; }
+$('save').onclick = async () => { try { await call({ type: 'SAVE_CONFIG', apiOrigin: validateOrigin($('origin').value.trim()) }); $('message').textContent = 'Backend saved.'; await refresh(); } catch(e) { $('message').textContent = e.message; } };
+$('setup').onsubmit = async e => { e.preventDefault(); try { const origin = validateOrigin($('origin').value.trim()); await call({ type: 'SAVE_CONFIG', apiOrigin: origin }); await call({ type: 'ENROLL', code: $('code').value.trim(), deviceName: $('device').value.trim() }); $('code').value = ''; $('message').textContent = 'Browser enrolled. Policy and activity sync are enabled.'; await refresh(); } catch(err) { $('message').textContent = err.message; } };
+$('sync').onclick = async () => { $('message').textContent = 'Syncing…'; try { await call({ type: 'SYNC_NOW' }); $('message').textContent = 'Sync requested.'; await refresh(); } catch(e) { $('message').textContent = e.message; } };
+refresh().catch(e => $('message').textContent = e.message);
