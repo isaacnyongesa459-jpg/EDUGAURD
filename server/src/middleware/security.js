@@ -1,0 +1,12 @@
+const jwt=require('jsonwebtoken'); const crypto=require('node:crypto'); const {z}=require('zod'); const db=require('../db');
+const safe=(a,b)=>{if(typeof a!=='string'||typeof b!=='string')return false;const x=Buffer.from(a),y=Buffer.from(b);return x.length===y.length&&crypto.timingSafeEqual(x,y)};
+const cookieSameSite=()=>{const v=(process.env.COOKIE_SAME_SITE||'lax').toLowerCase();if(!['strict','lax','none'].includes(v))throw new Error('COOKIE_SAME_SITE must be strict, lax, or none');if(v==='none'&&process.env.COOKIE_SECURE!=='true')throw new Error('COOKIE_SECURE=true is required when COOKIE_SAME_SITE=none');return v};
+const cookieSecure=()=>process.env.COOKIE_SECURE==='true';
+function issueCsrf(res){const token=crypto.randomBytes(24).toString('hex');res.cookie(process.env.CSRF_COOKIE_NAME||'eduguard_csrf',token,{httpOnly:false,sameSite:cookieSameSite(),secure:cookieSecure(),path:'/'} );return token;}
+function auth(req,res,next){try{const token=req.cookies[process.env.COOKIE_NAME||'eduguard_session'];if(!token)return res.status(401).json({error:'Authentication required'});req.user=jwt.verify(token,process.env.JWT_SECRET);next()}catch{return res.status(401).json({error:'Invalid or expired session'})}}
+function csrf(req,res,next){const cookie=req.cookies[process.env.CSRF_COOKIE_NAME||'eduguard_csrf'];const header=req.get('x-csrf-token');if(!safe(cookie,header))return res.status(403).json({error:'CSRF validation failed'});next()}
+function roles(...allowed){return(req,res,next)=>allowed.includes(req.user?.role)?next():res.status(403).json({error:'Insufficient role'})}
+function schoolScope(req,res,next){if(req.user.role==='SUPER_ADMIN'){req.schoolId=req.query.schoolId||req.body.schoolId||null;return next()} req.schoolId=req.user.schoolId;if(!req.schoolId)return res.status(403).json({error:'School access required'});next()}
+function validate(schema,source='body'){return(req,res,next)=>{const parsed=schema.safeParse(req[source]);if(!parsed.success)return res.status(400).json({error:'Invalid request',details:parsed.error.flatten()});req[source]=parsed.data;next()}}
+async function audit(req,action,type,id,metadata={}){await db.query('INSERT INTO audit_logs(school_id,actor_user_id,action,resource_type,resource_id,metadata) VALUES($1,$2,$3,$4,$5,$6)',[req.user?.schoolId||req.schoolId||null,req.user?.id||null,action,type,id||null,metadata])}
+module.exports={auth,csrf,roles,schoolScope,validate,issueCsrf,audit,jwt,cookieSameSite,cookieSecure,safe};
