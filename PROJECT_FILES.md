@@ -1,10 +1,10 @@
 # EduGuard files and how they connect
 
 ## App shell and frontend
-- `index.html` is the only dashboard document. It loads Chart.js, Socket.IO's client script, `client/styles.css`, `client/api.js`, and `client/app.js` using relative asset paths so project sites work under a GitHub Pages subpath.
-- `client/api.js` sends same-origin JSON requests using the HttpOnly session cookie and CSRF token; it defines `window.EduAPI`.
-- `client/app.js` renders role-aware dashboards and forms from live REST responses; it does not seed/sample analytics.
-- `client/register-sw.js` registers the static-shell worker relative to the app base; `client/service-worker.js` caches only the static shell and never authenticated API responses. `server/test/pages-subpath.test.js` guards GitHub Pages asset and PWA paths.
+- `index.html` is the only dashboard document. It loads Chart.js, Socket.IO's client script, `client/styles.css`, `client/api.js`, `client/demo-api.js`, and `client/app.js` using relative asset paths so project sites work under a GitHub Pages subpath.
+- `client/api.js` sends same-origin JSON requests using the HttpOnly session cookie and CSRF token; it defines `window.EduAPI`. `client/demo-api.js` provides fictional static records only for an explicit read-only GitHub Pages demo; it does not authenticate or write records.
+- `client/app.js` renders role-aware production dashboards and forms from live REST responses; the optional Pages demo is visibly labeled and read-only.
+- `client/register-sw.js` registers the static-shell worker relative to the app base; `client/service-worker.js` caches only static shell assets and never authenticated API responses. `server/test/pages-subpath.test.js` guards GitHub Pages asset/PWA paths; `server/test/demo-api.test.js` checks that demo fixtures are fictional and mutations are rejected.
 - `client/styles.css` owns responsive layouts, design tokens, focus visibility and light/dark styling.
 - `manifest.webmanifest` and `public/favicon.svg` define app metadata and the vector brand mark; `manus-routes.json` declares the single `/` page.
 

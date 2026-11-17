@@ -16,11 +16,11 @@ The app serves the static shell at `/`, browser files only under `/client/`, the
 
 ## GitHub Pages preview
 
-The frontend's local assets use relative paths so a GitHub Pages project site such as `/EDUGAURD/` can load its styles and scripts. GitHub Pages serves static files only: the sign-in form, API, database, Socket.IO updates, and extension backend are not provided by Pages. Sign-in and live data require deploying the Node.js/PostgreSQL backend separately and configuring a same-origin API route or an explicit frontend API origin with suitable CORS and secure-cookie settings. No backend URL or production service is configured by this repository.
+The frontend's local assets use relative paths so a GitHub Pages project site such as `/EDUGAURD/` can load its styles and scripts. Pages offers an explicit **Explore read-only demo** option with clearly fictional `*.example` records; it requires no credentials and cannot change records. This demo is not authentication and must never be used with real student data. GitHub Pages serves static files only: the API, database, Socket.IO updates, and extension backend are not hosted there. Real sign-in and live data require deploying the Node.js/PostgreSQL backend separately and configuring a same-origin API route or an explicit frontend API origin with suitable CORS and secure-cookie settings. No backend URL or production service is configured by this repository.
 
 ## Included foundations
 
-- Role-aware sign-in and dashboard pages for super administrators, school administrators, parents and teachers; UI/API values are populated from service responses, not fabricated sample data.
+- Role-aware sign-in and dashboard pages for super administrators, school administrators, parents and teachers; production UI/API values come from service responses. GitHub Pages has a separate, opt-in, read-only demo with fictional sample records.
 - PostgreSQL migrations for schools, users, students, parents, teachers, explicit guardian/teacher-to-student links, devices/assignments, categories, website/application rules, restriction policies, activity logs, notifications, audit logs, and subscriptions.
 - JWT session cookie, bcrypt password hashes, CSRF double-submit checks, validation, rate limits, security headers, school/role gates, audit events, and authenticated Socket.IO rooms.
 - Admin-created student/device/rule/user/school forms where supported. Device enrollment codes are short-lived and single-use; the resulting extension token is stored hashed on the server.
