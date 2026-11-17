@@ -14,7 +14,7 @@ test('local entry-page assets are relative for GitHub Pages project subpaths', (
   assert.ok(urls.length > 0);
   for (const url of urls) assert.equal(url.startsWith('/'), false, `${url} must not escape the project subpath`);
   assert.ok(html.indexOf('demo-api.js') < html.indexOf('app.js'), 'demo API must load before app bootstrap');
-  assert.match(html, /src="\.\/client\/app\.js"/);
+  assert.match(html, /src="\.\/client\/app\.js(?:\?[^\"]*)?"/);
 });
 
 test('PWA start URL and worker registration preserve the current project subpath', () => {
