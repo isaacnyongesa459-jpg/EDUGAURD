@@ -14,9 +14,11 @@ Requirements: Node.js 20+ and PostgreSQL 14+.
 
 The app serves the static shell at `/`, browser files only under `/client/`, the favicon under `/public/`, and JSON at `/manus-routes.json`. It does not expose arbitrary filesystem content. `/api/health` checks database availability and is suitable as a deployment health path.
 
-## GitHub Pages preview
+## Interactive demo preview
 
-The frontend's local assets use relative paths so a GitHub Pages project site such as `/EDUGAURD/` can load its styles and scripts. Pages offers an explicit **Explore read-only demo** option with clearly fictional `*.example` records; it requires no credentials and cannot change records. This demo is not authentication and must never be used with real student data. GitHub Pages serves static files only: the API, database, Socket.IO updates, and extension backend are not hosted there. Real sign-in and live data require deploying the Node.js/PostgreSQL backend separately and configuring a same-origin API route or an explicit frontend API origin with suitable CORS and secure-cookie settings. No backend URL or production service is configured by this repository.
+The landing page now opens an **Explore EduGuard demo** without login, registration, email, passwords, OTPs, payments or authentication tokens. The demo includes fictional school, student, device, website, application, activity, notification and analytics records; role-inspired administrator, teacher and parent views; responsive navigation; search and filters; charts; website approval/block controls; device status controls; CSV report export; local persistence; reset demo data; light/dark themes; and service-worker shell caching. Demo changes are stored only in the current browser's local storage and are never sent to the backend.
+
+The interface clearly labels sample records as demonstration data. It does not claim to monitor enrolled devices: actual monitoring and enforcement require the separately documented browser extension, a native device agent, supported MDM or another authorized integration. GitHub Pages can serve the static demo, while the API, database, Socket.IO updates and extension backend still require the Node.js/PostgreSQL deployment described below.
 
 ## Included foundations
 

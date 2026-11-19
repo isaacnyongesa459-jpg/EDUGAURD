@@ -1,5 +1,5 @@
 'use strict';
-const CACHE = 'eduguard-shell-v2';
+const CACHE = 'eduguard-shell-v4';
 const SHELL = ['/', '/client/styles.css', '/client/api.js', '/client/demo-api.js', '/client/app.js', '/public/favicon.svg', '/manifest.webmanifest'];
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));

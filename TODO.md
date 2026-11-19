@@ -3,6 +3,7 @@
 Status: **Implemented**, **Partial**, **Blocked**, **Not started**. A code foundation is not equivalent to production readiness. Do not mark external or device-dependent features complete without actual integration testing.
 
 ## 1. Stack, app architecture, and deployment — Partial
+- **Demo delivery:** Implemented a no-auth landing experience and persistent fictional demo layer in `client/demo-api.js`; the dashboard is interactive without a backend and is designed for smartphone testing.
 - Frontend uses HTML5, CSS3 and Vanilla JavaScript; backend uses Node.js/Express.js; database uses PostgreSQL; real-time channel uses Socket.IO; authentication uses JWT and bcrypt; charts use Chart.js; monitoring browser add-on uses Chrome/Edge Manifest V3; offline extension data uses IndexedDB; API uses REST; deployment template targets Render-compatible Node.js.
 - Keep HTML, CSS, JavaScript in separate files. Organize backend using controllers, routes, middleware, services and database models.
 - Maintain a working app throughout development and document exact filenames, their locations and connections.
@@ -10,6 +11,7 @@ Status: **Implemented**, **Partial**, **Blocked**, **Not started**. A code found
 - Status: plain frontend and modular server foundations exist; some API handlers remain concentrated in route modules; end-to-end live database/hosting validation remains open.
 
 ## 2. Roles, school boundaries, and access workflows — Partial
+- **Demo delivery:** Implemented administrator, teacher and parent demonstration views with clearly fictional data. Production authentication and least-privilege account workflows remain separate and are intentionally not used by the demo.
 - Implement Super Administrator: manage multiple schools; register schools and administrators; view overall system statistics; manage subscriptions and billing; platform-wide settings; monitor system health.
 - Implement School Administrator: register students and teachers; register/assign devices; view student device activity; block/allow applications and websites; set school-wide restrictions; create learning allowlists; generate reports; manage teachers and parents.
 - Implement Parent Dashboard: view only linked child's digital activity and timestamps/application usage; receive alerts about restricted access attempts; see daily/weekly reports; configure approved schedules only where school policy permits; receive unusual-activity notices.
@@ -30,12 +32,14 @@ Status: **Implemented**, **Partial**, **Blocked**, **Not started**. A code found
 - Status: extension stores an IndexedDB outbox with UUID deduplication and retry, and records allowed/blocked domain/timestamp plus approximate visit duration. Activity timeline and school/relationship scoping are foundational. Application names are unavailable to this extension; browser closed/disabled/offline means no fresh events. Full URL is disabled and not stored by API. Activity sync rejects unassigned or ambiguously multi-assigned devices instead of silently misattributing events. Conflict resolution beyond idempotent dedupe, parent/child notices/consent evidence, retention/deletion, data export, DPIA/legal review, encryption-at-rest strategy, incident response and lawful-basis governance remain required. No compliance certification is claimed.
 
 ## 5. Analytics, trends, and policy alerts — Partial
+- **Demo delivery:** Implemented responsive demo charts, category mix, attention signals, notifications, search/filter controls and CSV activity export. These values are illustrative and are not production analytics.
 - Show total device usage hours, educational website usage percentage, restricted attempts, most-visited sites/apps, time on learning platforms, daily/weekly/monthly trends and compliance.
 - Categorize activity as educational, recreational, restricted or unknown. Base alerts on defined policies, not unsupported assumptions.
 - Notify on repeated blocked attempts, unapproved apps, outside-schedule device use, missed synchronization, and unusual patterns requiring admin review; support dashboard and email.
 - Status: database-backed counts/trends and Chart.js display are implemented where data exists; empty data remains empty, not invented. Alert generation, schedule evaluation, email delivery, reliable app-usage measures, compliance semantics, total-usage calculations, monthly views, and report export are not complete.
 
 ## 6. Device management and offline synchronization — Partial / native and MDM prerequisites
+- **Demo delivery:** Implemented responsive device inventory, student/policy details, local online/offline status toggles and resettable browser-local persistence. Remote management still requires an enrolled device integration.
 - Each device has unique ID, assigned student, school ID, OS, status, last sync, applied policy and enrollment date; support enrollment, policy assignment, remote updates and deactivation.
 - Clearly distinguish browser extension capability from native agent or MDM integration.
 - Status: single-use expiring enrollment code, hashed device token, school assignment, status and last-seen fields, extension policy sync, event batching and deactivation primitives exist. Complete device inventory workflows, revocation delivery, assignment UI, recovery/re-enrollment UX, native agents and MDM deployment remain open.
