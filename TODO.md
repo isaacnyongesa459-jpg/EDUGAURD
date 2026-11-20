@@ -3,7 +3,7 @@
 Status: **Implemented**, **Partial**, **Blocked**, **Not started**. A code foundation is not equivalent to production readiness. Do not mark external or device-dependent features complete without actual integration testing.
 
 ## 1. Stack, app architecture, and deployment — Partial
-- **Demo delivery:** Implemented a no-auth landing experience and persistent fictional demo layer in `client/demo-api.js`; the dashboard is interactive without a backend and is designed for smartphone testing.
+- **Demo delivery:** Implemented a temporary arbitrary-credentials login in `client/app.js` backed by the frontend-only adapter in `client/demo-api.js`; it stores only a local demo-session flag and does not alter production API authentication. The persistent fictional demo layer remains interactive without a backend and is designed for smartphone testing.
 - Frontend uses HTML5, CSS3 and Vanilla JavaScript; backend uses Node.js/Express.js; database uses PostgreSQL; real-time channel uses Socket.IO; authentication uses JWT and bcrypt; charts use Chart.js; monitoring browser add-on uses Chrome/Edge Manifest V3; offline extension data uses IndexedDB; API uses REST; deployment template targets Render-compatible Node.js.
 - Keep HTML, CSS, JavaScript in separate files. Organize backend using controllers, routes, middleware, services and database models.
 - Maintain a working app throughout development and document exact filenames, their locations and connections.

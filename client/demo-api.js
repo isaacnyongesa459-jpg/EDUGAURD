@@ -73,6 +73,16 @@
     exportReport() { const csv = ['Student,Device,Website,Category,Time,Duration,Status'].concat(data.activity.map(x => [studentName(x.studentId), x.deviceId, x.site, x.category, x.time, x.duration, x.status].map(v => `"${String(v).replaceAll('"', '""')}"`).join(','))).join('\n'); const blob = new Blob([csv], { type: 'text/csv' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'eduguard-demo-report.csv'; a.click(); URL.revokeObjectURL(url); },
     studentName
   };
+  const SESSION_KEY = 'eduguard-demo-session';
+  const demoAuth = {
+    async signIn(_identity, _password) {
+      localStorage.setItem(SESSION_KEY, 'true');
+      return { mode: 'demo', authenticated: true };
+    },
+    signOut() { localStorage.removeItem(SESSION_KEY); },
+    isAuthenticated() { return localStorage.getItem(SESSION_KEY) === 'true'; }
+  };
   window.EduDemoAPI = api;
+  window.EduDemoAuth = demoAuth;
   if (typeof window.addEventListener === 'function') window.addEventListener('storage', e => { if (e.key === KEY) location.reload(); });
 })();

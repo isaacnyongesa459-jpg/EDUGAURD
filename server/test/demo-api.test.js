@@ -8,7 +8,7 @@ const root = path.join(__dirname, '../..');
 
 function loadDemoApi() {
   const storage = new Map();
-  const localStorage = { getItem: key => storage.get(key) || null, setItem: (key, value) => storage.set(key, value) };
+  const localStorage = { getItem: key => storage.get(key) || null, setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key) };
   const window = {};
   const source = fs.readFileSync(path.join(root, 'client/demo-api.js'), 'utf8');
   vm.runInNewContext(source, { window, Date, localStorage, Blob: class Blob {}, URL: { createObjectURL: () => '', revokeObjectURL: () => {} } });
@@ -38,4 +38,21 @@ test('static demo supports safe fictional mutations and reset', async () => {
   api.reset();
   assert.equal(api.state.websites.length, before);
   assert.equal(api.state.devices[0].status, originalStatus);
+});
+
+test('demo authentication accepts arbitrary credentials and stores only a local session flag', async () => {
+  const storage = new Map();
+  const localStorage = { getItem: key => storage.get(key) || null, setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key) };
+  const window = {};
+  const source = fs.readFileSync(path.join(root, 'client/demo-api.js'), 'utf8');
+  vm.runInNewContext(source, { window, Date, localStorage, Blob: class Blob {}, URL: { createObjectURL: () => '', revokeObjectURL: () => {} } });
+  const auth = window.EduDemoAuth;
+  assert.equal(auth.isAuthenticated(), false);
+  const result = await auth.signIn('anything@example.test', 'not-a-real-password');
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), { mode: 'demo', authenticated: true });
+  assert.equal(auth.isAuthenticated(), true);
+  assert.equal(storage.size, 1);
+  assert.equal(storage.get('eduguard-demo-session'), 'true');
+  auth.signOut();
+  assert.equal(auth.isAuthenticated(), false);
 });
